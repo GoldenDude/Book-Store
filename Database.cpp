@@ -57,6 +57,7 @@ Database::Database() : driver(get_driver_instance()) {
 				"name VARCHAR(50) PRIMARY KEY, "
 				"Author VARCHAR(30) NOT NULL, "
 				"price INT UNSIGNED, "
+				"supplier_price INT UNSIGNED,"
 				"max_stock INT UNSIGNED, "
 				"current_stock INT UNSIGNED, "
 				"global_discount FLOAT UNSIGNED, "
@@ -132,18 +133,18 @@ void Database::addBooks(){
 	Connection *con = driver->connect(connection_properties);
 	con->setSchema(DB_NAME);
 	Statement *stmt = con->createStatement();
-	stmt->execute("insert into book(name, author, price, max_stock, current_stock, global_discount)"
-													 "values('The Book Of Mormons', 'James Dean', 35, 350, 299, 0.1)," 
-													 "('Harry Potter And The Philosophers Stone', 'J.K Rolling', 200, 150, 98, 0),"
-													 "('Harry Potter And The Chamber of Secrets', 'J.K Rolling', 150, 260, 163, 0.1),"
-													 "('Harry Potter And The Prisoner of Azkaban', 'J.K Rolling', 150, 450, 35, 0),"
-													 "('A Song Of Ice And Fire 1: A Game Of Thrones', 'George R.R Martin', 250, 350, 71, 0),"
-													 "('A Song Of Ice And Fire 2: A Clash Of Kings', 'George R.R Martin', 300, 150, 86, 0),"
-													 "('A Song Of Ice And Fire 3: A Storm Of Swords', 'George R.R Martin', 250, 500, 143, 0),"
-													 "('A Song Of Ice And Fire 4: A Feast For Crows', 'George R.R Martin', 150, 175, 68, 0.1),"
-													 "('Enders Game', 'Orson Scott Card', 135, 350, 175, 0),"
-													 "('Enders Shadow', 'Orson Scott Card', 250, 550, 196, 0.1),"
-													 "('It, First Edition', 'Stephen King', 750, 350, 0, 0);");
+	stmt->execute("insert into book(name, author, price, supplier_price, max_stock, current_stock, global_discount)"
+													 "values('The Book Of Mormons', 'James Dean', 150, 35, 350, 299, 0.1)," 
+													 "('Harry Potter And The Philosophers Stone', 'J.K Rolling', 200, 30,150, 98, 0),"
+													 "('Harry Potter And The Chamber of Secrets', 'J.K Rolling', 150, 20 ,260, 163, 0.1),"
+													 "('Harry Potter And The Prisoner of Azkaban', 'J.K Rolling', 150, 50, 450, 35, 0),"
+													 "('A Song Of Ice And Fire 1: A Game Of Thrones', 'George R.R Martin',250, 35, 350, 71, 0),"
+													 "('A Song Of Ice And Fire 2: A Clash Of Kings', 'George R.R Martin', 300, 45, 150, 86, 0),"
+													 "('A Song Of Ice And Fire 3: A Storm Of Swords', 'George R.R Martin', 250, 45, 500, 143, 0),"
+													 "('A Song Of Ice And Fire 4: A Feast For Crows', 'George R.R Martin', 150, 10,175, 68, 0.1),"
+													 "('Enders Game', 'Orson Scott Card', 135, 15,350, 175, 0),"
+													 "('Enders Shadow', 'Orson Scott Card', 250, 30,550, 196, 0.1),"
+													 "('It, First Edition', 'Stephen King', 750, 300,350, 0, 0);");
 	
 	delete con;
 	delete stmt;
@@ -208,7 +209,7 @@ void Database::addDeals(){
 
 	stmt->execute("insert into deal (deal_val, client_id, discount, emp_id, is_canceled, deal_date) values(0, 1, 0.2, 3, false, '1998-12-02'),(0, 2, 0.1, 2, false, '1997-09-08'),(0, 3, 0.4, 1, true, '2000-03-06'),"
 								  "(0, 4, 0.3, 4, false, '1998-08-02'),(0, 4, 0.2, 1, false, '2016-03-26'),(0, 5, 0.3, 3, false, '2005-10-06'),(0, 6, 0.3, 4, false, '2018-07-17'),(0, 10, 0.1, 5, false, '2003-03-24'),"
-								  "(0, 6, 0.3, 3, false, '2015-06-06'),(0, 7, 0.3, 4, false, '2017-11-11'),(0, 8, 0.2, 2, false, '2002-10-02'),(0, 8, 0.2, 3, false, '2018-03-06'),(0, 9, 0.1, 1, false, '1999-09-06'),(0, 10, 0.2, 1, true, '2017-10-29');");
+								  "(0, 6, 0.3, 3, false, '2015-06-06'),(0, 7, 0.3, 4, false, '2017-11-11'),(0, 8, 0.2, 2, false, '2002-10-02'),(0, 8, 0.2, 3, false, '2018-03-06'),(0, 9, 0.1, 1, false, '2017-09-06'),(0, 10, 0.2, 1, true, '2017-10-29');");
 
 
 	stmt->execute("CREATE TABLE  temp AS SELECT deal_num, SUM(price) as val FROM deal_book inner join book where book.name = deal_book.book_name group by deal_num;");
@@ -216,12 +217,12 @@ void Database::addDeals(){
 	stmt->execute("UPDATE deal, temp SET deal.deal_val = temp.val WHERE deal.deal_num = temp.deal_num;");
 	stmt->execute("DROP TABLE temp;");
 
-	/* Updating total sum of deals in clients*/
-	stmt->execute("CREATE TABLE temp as SELECT deal.client_id, SUM(CEILING(deal_val * (1 - deal.discount))) AS val from deal group by deal.client_id;");
+	/* Updating total sum + sum this year, of deals in clients*/
+	stmt->execute("CREATE TABLE temp as SELECT deal.client_id, SUM(CEILING(deal_val * (1 - deal.discount))) AS val from deal WHERE is_canceled = 0 group by deal.client_id;");
 	stmt->execute("UPDATE client, temp SET total_sum = temp.val WHERE client.client_id = temp.client_id;");
 	stmt->execute("DROP TABLE temp;");
 
-	stmt->execute("CREATE TABLE temp as SELECT deal.client_id, SUM(CEILING(deal_val * (1 - deal.discount))) as val FROM deal WHERE deal.deal_date BETWEEN(curdate() - INTERVAL 1 YEAR) AND curdate() group by deal.client_id;");
+	stmt->execute("CREATE TABLE temp as SELECT deal.client_id, SUM(CEILING(deal_val * (1 - deal.discount))) as val FROM deal WHERE is_canceled = 0 AND deal.deal_date BETWEEN(curdate() - INTERVAL 1 YEAR) AND curdate() group by deal.client_id;");
 	stmt->execute("UPDATE client, temp SET sum_this_year = temp.val WHERE client.client_id = temp.client_id;");
 	stmt->execute("DROP TABLE temp;");
 	delete con;
@@ -233,7 +234,7 @@ void Database::addOrders(){
 	Connection *con = driver->connect(connection_properties);
 	con->setSchema(DB_NAME);
 	Statement *stmt = con->createStatement();
-	stmt->execute("INSERT INTO orders (order_date, client_id, supplier_num) values('2013/04/08', 10, 2),('1998/12/01', 1, 2),('2009/11/25', 5, 1),('2009/12/27', 9, 3),('2017/08/31', 10, 5),('2016/02/11', 9, 3),('2017/10/12', 4, 8),('2018/01/15', 5, 12),('2011/07/11', 4, 11),('2018/04/07', 7, 7);");
+	stmt->execute("INSERT INTO orders (order_date, client_id, supplier_num) values('2013/04/08', 10, 2),('1998/12/01', 1, 2),('2009/11/25', 5, 1),('2017/12/27', 9, 3),('2017/08/31', 10, 5),('2018/02/11', 9, 3),('2017/10/12', 4, 8),('2018/01/15', 5, 12),('2011/07/11', 4, 11),('2018/04/07', 7, 7);");
 
 	stmt->execute("INSERT INTO order_book (order_num, book_name) values(10, 'Harry Potter And The Chamber Of Secrets'),(9, 'A Song Of Ice And Fire 2: A Clash Of Kings'),(6, 'Enders Shadow'),(8, 'Harry Potter And The Prisoner Of Azkaban'),(7,'It, First Edition'),"
 				  "(3, 'The Book Of Mormons'),(2, 'Enders Shadow'),(1, 'Harry Potter And The Chamber Of Secrets'),(5, 'Harry Potter And The Philosophers Stone'),(3, 'A Song Of Ice And Fire 4: A Feast For Crows'),(7, 'A Song Of Ice And Fire 3: A Storm Of Swords'),(6, 'Enders Game'),(4, 'Harry Potter And The Philosophers Stone'),(2, 'It, First Edition'),(1, 'Enders Game');");

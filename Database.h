@@ -45,6 +45,8 @@ public:
 	void allBooks();
 	void openOrders();
 	void allClients();
+	void allSuppliers();
+	void dealsInDates();
 };
 
 

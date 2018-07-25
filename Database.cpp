@@ -258,6 +258,10 @@ void Database::allBooks(){
 	while (rset->next()) {
 		cout << rset->getString("name") << ". By: " << rset->getString("Author") << "." << endl;
 	}
+
+	delete con;
+	delete stmt;
+	delete rset;
 }
 
 void Database::openOrders() {
@@ -273,6 +277,10 @@ void Database::openOrders() {
 	while (rset->next()) {
 		cout << "Order Number: " << rset->getUInt("order_num") << ". Order Date: " << rset->getString("order_date") << ". Status: " << rset->getString("order_status") << "." << endl;
 	}
+
+	delete con;
+	delete stmt;
+	delete rset;
 }
 
 void Database::allClients() {
@@ -289,4 +297,57 @@ void Database::allClients() {
 			 << rset->getString("first_name") << " " << rset->getString("last_name") << ".\t\tPhone Number: " 
 			 << rset->getString("phone_num") << "." << endl;
 	}
+
+	delete con;
+	delete stmt;
+	delete rset;
+}
+
+void Database::allSuppliers() {
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	Statement *stmt = con->createStatement();
+	ResultSet *rset = stmt->executeQuery("SELECT * FROM supplier;");
+
+	rset->beforeFirst();
+	cout << "Supplier:" << endl;
+
+	while (rset->next()) {
+		cout << "Supplier Number: " << rset->getUInt("supplier_num") << ".\tSupplier Name: "
+			 << rset->getString("supplier_name") << "." << endl;
+	}
+
+	delete con;
+	delete stmt;
+	delete rset;
+}
+
+void Database::dealsInDates() {
+	 string date;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;	
+	PreparedStatement *pstmt = con->prepareStatement("SELECT * FROM deal WHERE deal.deal_date BETWEEN ? AND ?;");
+
+	cout << "Please Enter Start Date:> ";
+	cin >> date;
+	pstmt->setString(1, date);
+
+	cout << "Please Enter End Date:> ";
+	cin >> date;
+	
+	pstmt->setString(2, date);
+	
+	rset = pstmt->executeQuery();
+
+	rset->beforeFirst();
+	cout << "Deals:" << endl;
+
+	while (rset->next()) {
+		cout << "Deal Number: " << rset->getUInt("deal_num") << ". \tDeal Date: "
+			<< rset->getString("deal_date") << "." << endl;
+	}
+
+	delete con;
+	delete rset;
 }

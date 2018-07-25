@@ -40,8 +40,12 @@ public:
 	void addDeals();
 	void addOrders();
 	void addWorkers();
+	
+	/* Menu Options Functions */
+	void allBooks();
+	void openOrders();
+	void allClients();
 };
-
 
 
 

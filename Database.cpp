@@ -164,14 +164,15 @@ void Database::addWorkers() {
 
 }
 
+
 void Database::addClients(){
 	Connection *con = driver->connect(connection_properties);
 	con->setSchema(DB_NAME);
 	Statement *stmt = con->createStatement();
 	stmt->execute("insert into client (first_name, last_name, phone_num, join_date, sum_this_year, total_sum) values ('Aggi', 'Blanpein', '804 486 8130', '1998-12-02', 0, 0),"
-													 "('Silvester', 'Hainning', '509 890 7069', '1997-09-08', 0, 0),('Pepillo', 'Stolle', '505 193 6383', '2000-03-06', 0, 0),"
+													 "('Silvester', 'Hainn', '509 890 7069', '1997-09-08', 0, 0),('Pepillo', 'Stolle', '505 193 6383', '2000-03-06', 0, 0),"
 													 "('Whit', 'Kevane', '215 246 6187', '1998-08-02', 0, 0),('Humphrey', 'Kinglake', '955 602 2484', '2005-10-06', 0, 0),"
-													 "('Frasquito', 'Beamish', '236 569 0397', '2007-07-17', 0, 0),('Teresina', 'Yepiskopov', '155 501 9829', '2002-10-02', 0, 0),"
+													 "('Frasquito', 'Beamish', '236 569 0397', '2007-07-17', 0, 0),('Teresina', 'Yepisko', '155 501 9829', '2002-10-02', 0, 0),"
 													 "('Grace', 'Airton', '128 818 9009', '2009-11-11', 0, 0),('Quill', 'Glamart', '557 667 4766', '1999-09-06', 0, 0),('Elsey', 'Edge', '823 661 2828', '2003-03-24', 0, 0);");
 	
 	delete con;
@@ -236,7 +237,7 @@ void Database::addOrders(){
 	Connection *con = driver->connect(connection_properties);
 	con->setSchema(DB_NAME);
 	Statement *stmt = con->createStatement();
-	stmt->execute("INSERT INTO orders (order_date, client_id, supplier_num, order_status) values('2013/04/08', 10, 2, 'Closed'),('1998/12/01', 1, 2, 'Sent Message'),('2009/11/25', 5, 1, 'Closed'),('2017/12/27', 9, 3, 'Ordered'),('2017/08/31', 10, 5, 'Arrived'),('2018/02/11', 9, 3, 'Sent Message'),('2017/10/12', 4, 8, 'Arrived'),('2018/01/15', 5, 12, 'Ordered'),('2011/07/11', 4, 11, 'Closed'),('2018/04/07', 7, 7, 'Sent Message');");
+	stmt->execute("INSERT INTO orders (order_date, client_id, supplier_num, order_status) values('2013/04/08', 10, 2, 'Closed'),('1998/12/01', 1, 2, 'Closed'),('2009/11/25', 5, 1, 'Closed'),('2017/12/27', 9, 3, 'Ordered'),('2017/08/31', 10, 5, 'Arrived'),('2018/02/11', 9, 3, 'Sent Message'),('2017/10/12', 4, 8, 'Arrived'),('2018/01/15', 5, 12, 'Ordered'),('2011/07/11', 4, 11, 'Closed'),('2018/04/07', 7, 7, 'Closed');");
 
 	stmt->execute("INSERT INTO order_book (order_num, book_name) values(10, 'Harry Potter And The Chamber Of Secrets'),(9, 'A Song Of Ice And Fire 2: A Clash Of Kings'),(6, 'Enders Shadow'),(8, 'Harry Potter And The Prisoner Of Azkaban'),(7,'It, First Edition'),"
 				  "(3, 'The Book Of Mormons'),(2, 'Enders Shadow'),(1, 'Harry Potter And The Chamber Of Secrets'),(5, 'Harry Potter And The Philosophers Stone'),(3, 'A Song Of Ice And Fire 4: A Feast For Crows'),(7, 'A Song Of Ice And Fire 3: A Storm Of Swords'),(6, 'Enders Game'),(4, 'Harry Potter And The Philosophers Stone'),(2, 'It, First Edition'),(1, 'Enders Game');");
@@ -245,4 +246,47 @@ void Database::addOrders(){
 	delete stmt;
 }
 
+void Database::allBooks(){
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	Statement *stmt = con->createStatement();
+	ResultSet *rset =  stmt->executeQuery("SELECT * FROM book WHERE current_stock != 0");
 
+	rset->beforeFirst();
+	cout << "Books Currently In Stock:" << endl;
+
+	while (rset->next()) {
+		cout << rset->getString("name") << ". By: " << rset->getString("Author") << "." << endl;
+	}
+}
+
+void Database::openOrders() {
+
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	Statement *stmt = con->createStatement();
+	ResultSet *rset = stmt->executeQuery("SELECT * FROM orders inner join order_book WHERE order_status != 'Closed' AND orders.order_num = order_book.order_num;");
+
+	rset->beforeFirst();
+	cout << "Open Orders:" << endl;
+
+	while (rset->next()) {
+		cout << "Order Number: " << rset->getUInt("order_num") << ". Order Date: " << rset->getString("order_date") << ". Status: " << rset->getString("order_status") << "." << endl;
+	}
+}
+
+void Database::allClients() {
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	Statement *stmt = con->createStatement();
+	ResultSet *rset = stmt->executeQuery("SELECT * FROM client;");
+
+	rset->beforeFirst();
+	cout << "Clients:" << endl;
+
+	while (rset->next()) {
+		cout << "Client ID: " << rset->getUInt("client_id") << ".\tClient Name: " 
+			 << rset->getString("first_name") << " " << rset->getString("last_name") << ".\t\tPhone Number: " 
+			 << rset->getString("phone_num") << "." << endl;
+	}
+}

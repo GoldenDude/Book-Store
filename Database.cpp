@@ -18,6 +18,7 @@ Database::Database() : driver(get_driver_instance()) {
 			con->setSchema(DB_NAME);
 		}
 		catch (SQLException &e) {
+			cout << "Loading Data Base. This May Take a While...." << endl;
 			Statement *stmt = con->createStatement();
 			string q = "CREATE DATABASE IF NOT EXISTS ";
 			q.append(DB_NAME);
@@ -39,7 +40,7 @@ Database::Database() : driver(get_driver_instance()) {
 				")");
 
 			stmt->execute("CREATE TABLE IF NOT EXISTS orders(order_num INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, order_date DATE,client_id INT UNSIGNED,"
-				"supplier_num INT UNSIGNED, FOREIGN KEY(client_id) references client(client_id))");
+				"supplier_num INT UNSIGNED, order_status VARCHAR(50), FOREIGN KEY(client_id) references client(client_id))");
 
 			stmt->execute("CREATE TABLE IF NOT EXISTS deal("
 				"deal_num INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, "
@@ -105,6 +106,7 @@ Database::Database() : driver(get_driver_instance()) {
 		}
 
 		delete con;
+		cout << "Data Base Loaded!" << endl;
 	}
 	catch (SQLException &e) {
 		cout << e.getErrorCode() << " " << e.what() << " " << e.getSQLState();
@@ -234,7 +236,7 @@ void Database::addOrders(){
 	Connection *con = driver->connect(connection_properties);
 	con->setSchema(DB_NAME);
 	Statement *stmt = con->createStatement();
-	stmt->execute("INSERT INTO orders (order_date, client_id, supplier_num) values('2013/04/08', 10, 2),('1998/12/01', 1, 2),('2009/11/25', 5, 1),('2017/12/27', 9, 3),('2017/08/31', 10, 5),('2018/02/11', 9, 3),('2017/10/12', 4, 8),('2018/01/15', 5, 12),('2011/07/11', 4, 11),('2018/04/07', 7, 7);");
+	stmt->execute("INSERT INTO orders (order_date, client_id, supplier_num, order_status) values('2013/04/08', 10, 2, 'Closed'),('1998/12/01', 1, 2, 'Sent Message'),('2009/11/25', 5, 1, 'Closed'),('2017/12/27', 9, 3, 'Ordered'),('2017/08/31', 10, 5, 'Arrived'),('2018/02/11', 9, 3, 'Sent Message'),('2017/10/12', 4, 8, 'Arrived'),('2018/01/15', 5, 12, 'Ordered'),('2011/07/11', 4, 11, 'Closed'),('2018/04/07', 7, 7, 'Sent Message');");
 
 	stmt->execute("INSERT INTO order_book (order_num, book_name) values(10, 'Harry Potter And The Chamber Of Secrets'),(9, 'A Song Of Ice And Fire 2: A Clash Of Kings'),(6, 'Enders Shadow'),(8, 'Harry Potter And The Prisoner Of Azkaban'),(7,'It, First Edition'),"
 				  "(3, 'The Book Of Mormons'),(2, 'Enders Shadow'),(1, 'Harry Potter And The Chamber Of Secrets'),(5, 'Harry Potter And The Philosophers Stone'),(3, 'A Song Of Ice And Fire 4: A Feast For Crows'),(7, 'A Song Of Ice And Fire 3: A Storm Of Swords'),(6, 'Enders Game'),(4, 'Harry Potter And The Philosophers Stone'),(2, 'It, First Edition'),(1, 'Enders Game');");

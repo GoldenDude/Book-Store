@@ -47,6 +47,9 @@ public:
 	void allClients();
 	void allSuppliers();
 	void dealsInDates();
+	void booksOnDiscount();
+	void checkStock();
+	void bookSupplier();
 };
 
 

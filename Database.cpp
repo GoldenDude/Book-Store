@@ -1,5 +1,10 @@
 #include "Database.h"
+#include <iostream>
 
+void clearCin() {
+	string temp;
+	getline(cin, temp);
+}
 
 
 Database *Database::instance = 0;
@@ -251,12 +256,12 @@ void Database::allBooks(){
 	con->setSchema(DB_NAME);
 	Statement *stmt = con->createStatement();
 	ResultSet *rset =  stmt->executeQuery("SELECT * FROM book WHERE current_stock != 0");
-
+	int counter = 1;
 	rset->beforeFirst();
 	cout << "Books Currently In Stock:" << endl;
 
 	while (rset->next()) {
-		cout << rset->getString("name") << ". By: " << rset->getString("Author") << "." << endl;
+		cout << counter << ") " << rset->getString("name") << ". By: " << rset->getString("Author") << "." << endl;
 	}
 
 	delete con;
@@ -323,7 +328,7 @@ void Database::allSuppliers() {
 }
 
 void Database::dealsInDates() {
-	 string date;
+	string date;
 	Connection *con = driver->connect(connection_properties);
 	con->setSchema(DB_NAME);
 	ResultSet *rset;	
@@ -349,5 +354,97 @@ void Database::dealsInDates() {
 	}
 
 	delete con;
+	delete pstmt;
 	delete rset;
+}
+
+
+void Database::booksOnDiscount(){
+	int counter = 1;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	Statement *stmt = con->createStatement();
+	rset = stmt->executeQuery("SELECT * FROM book WHERE book.global_discount > 0;");
+
+	rset->beforeFirst();
+	cout << "Books On Discout:" << endl;
+
+	while (rset->next()) {
+
+		cout << counter << ") " << rset->getString("name") << ", By "
+			 << rset->getString("Author") << ",\tIs On A " << rset->getDouble("global_discount") * 100 << "% Discount." << endl;
+		++counter;
+	}
+
+	delete con;
+	delete stmt;
+	delete rset;
+}
+
+void Database::checkStock() {
+
+	string bookName;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT * FROM book WHERE book.name = ?;");
+	
+
+	
+	cout << "Please Enter Book Name:> ";
+	clearCin();
+	getline(cin, bookName);
+	pstmt->setString(1, bookName);
+	rset = pstmt->executeQuery();
+
+	rset->beforeFirst();
+	
+	if (rset->next()) {
+		int stock = rset->getInt("current_stock");
+		cout << "The Book '" << rset->getString("name") << "' Is Currently ";
+
+		if (stock) {
+			cout << "In Stock With " << stock << " Units Remaining!" << endl;
+		}
+		else cout << " NOT In Stock!" << endl;
+	}
+
+	else cout << "Book Named '" << bookName << "' Was Not Found In The Store..." << endl;
+
+	delete con;
+	delete pstmt;
+	delete rset;
+}
+
+void Database::bookSupplier(){
+
+	string bookName;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("CREATE TABLE temp AS SELECT * FROM book inner join supplier_book WHERE book.name = supplier_book.book_name AND supplier_book.book_name = ? group by supplier_num;");
+
+	cout << "Please Enter Book Name:> ";
+	clearCin();
+	getline(cin, bookName);
+	pstmt->setString(1, bookName);
+	pstmt->execute();
+	pstmt = con->prepareStatement("SELECT supplier.supplier_num, supplier_name FROM temp inner join supplier where temp.supplier_num = supplier.supplier_num;");
+	rset = pstmt->executeQuery();
+
+	rset->beforeFirst();
+
+	cout << "The Book '" << bookName << "' Is Supplied By: " << endl;
+	while (rset->next()) {
+		cout << "Supplier Number: " << rset->getString("supplier_num") << ". Supplier Name: " << rset->getString("supplier_name") << "." << endl;
+	}
+
+	pstmt = con->prepareStatement("DROP TABLE temp");
+	pstmt->execute();
+
+	delete con;
+	delete pstmt;
+	delete rset;
+
 }

@@ -389,9 +389,7 @@ void Database::checkStock() {
 	con->setSchema(DB_NAME);
 	ResultSet *rset;
 	PreparedStatement *pstmt = con->prepareStatement("SELECT * FROM book WHERE book.name = ?;");
-	
-
-	
+		
 	cout << "Please Enter Book Name:> ";
 	clearCin();
 	getline(cin, bookName);
@@ -446,5 +444,75 @@ void Database::bookSupplier(){
 	delete con;
 	delete pstmt;
 	delete rset;
+}
 
+void Database::bookSoldSince() {
+
+	string temp;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT * FROM deal INNER JOIN deal_book WHERE deal.deal_num = deal_book.deal_num AND book_name = ? AND deal_date >= ?;");
+
+	cout << "Please Enter Book Name:> ";
+	clearCin();
+	getline(cin, temp);
+	pstmt->setString(1, temp);
+
+	cout << "Please Enter Date:> ";
+	getline(cin, temp);
+	pstmt->setString(2, temp);
+
+	rset = pstmt->executeQuery();
+	
+	rset->beforeFirst();
+	if (rset->next()) {
+		cout << "The Book '" << rset->getString("book_name") << "' Was Ordered " << rset->rowsCount() << " Times Since " << temp << endl;
+	}
+
+	else cout << "Invaid Book Name Or Date." << endl;
+
+	delete con;
+	delete pstmt;
+	delete rset;
+}
+
+
+void Database::booksClientBoughtSince() {
+	
+	string temp;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT * FROM deal INNER JOIN deal_book WHERE deal.deal_num = deal_book.deal_num AND deal.client_id = ? AND deal.deal_date >= ?;");
+
+	cout << "Please Enter Client Id:> ";
+	clearCin();
+	getline(cin, temp);
+	pstmt->setString(1, temp);
+
+	cout << "Please Enter Date:> ";
+	getline(cin, temp);
+	pstmt->setString(2, temp);
+
+	rset = pstmt->executeQuery();
+
+	rset->beforeFirst();
+
+	if (rset->next()) {
+
+		pstmt = con->prepareStatement("SELECT first_name, last_name FROM client WHERE client_id = ?;");
+		string test = rset->getString("client_id");
+		pstmt->setString(1,test);
+		ResultSet *rset2 = pstmt->executeQuery();
+		rset2->first();
+
+		cout << rset2->getString("first_name") << " " << rset2->getString("last_name") << " Has Ordered " << rset->rowsCount() << " Books Since " << temp << endl;
+	}
+
+	else cout << "Invaid Client ID Or Date." << endl;
+
+	delete con;
+	delete pstmt;
+	delete rset;
 }

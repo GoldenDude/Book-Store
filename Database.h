@@ -50,6 +50,8 @@ public:
 	void booksOnDiscount();
 	void checkStock();
 	void bookSupplier();
+	void bookSoldSince();
+	void booksClientBoughtSince();
 };
 
 

@@ -505,9 +505,10 @@ void Database::booksClientBoughtSince() {
 		string test = rset->getString("client_id");
 		pstmt->setString(1,test);
 		ResultSet *rset2 = pstmt->executeQuery();
-		rset2->first();
-
-		cout << rset2->getString("first_name") << " " << rset2->getString("last_name") << " Has Ordered " << rset->rowsCount() << " Books Since " << temp << endl;
+		
+		if (rset2->first()) {
+			cout << rset2->getString("first_name") << " " << rset2->getString("last_name") << " Has Ordered " << rset->rowsCount() << " Books Since " << temp << endl;
+		}
 	}
 
 	else cout << "Invaid Client ID Or Date." << endl;
@@ -515,4 +516,133 @@ void Database::booksClientBoughtSince() {
 	delete con;
 	delete pstmt;
 	delete rset;
+}
+
+void Database::clientsJoinedAfterDate() {
+	
+	string temp;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT * FROM client WHERE join_date >= ?;");
+
+	cout << "Please Enter Date:> ";
+	clearCin();
+	getline(cin, temp);
+	pstmt->setString(1, temp);
+	rset = pstmt->executeQuery();
+
+	if (!rset->first()) {
+		cout << "Invaid Date or No Clients Found That Joined After The Date That Was Given." << endl;
+		delete con;
+		delete pstmt;
+		delete rset;
+		return;
+	}
+
+	rset->beforeFirst();
+	int count = 1;
+
+	while (rset->next()) {
+		cout << count << ") " << rset->getString("first_name") << " " << rset->getString("last_name") << ",\tJoined At " << rset->getString("join_date") << "." << endl;
+		++count;
+	}
+
+	delete con;
+	delete pstmt;
+	delete rset;
+}
+
+void Database::topClient() {
+
+	string temp;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT client.first_name, client.last_name, SUM(deal_books_count.count_books) as counter FROM client INNER JOIN(SELECT deal.client_id, COUNT(*) AS count_books FROM deal INNER JOIN deal_book WHERE deal_book.deal_num = deal.deal_num AND deal.deal_date >= ? GROUP BY deal.deal_num) AS deal_books_count ON deal_books_count.client_id = client.client_id group by first_name ORDER BY counter desc;");
+	cout << "Please Enter Date:> ";
+	clearCin();
+	getline(cin, temp);
+	pstmt->setString(1, temp);
+	rset = pstmt->executeQuery();
+
+	if (rset->first()){
+		cout << rset->getString("first_name") << " " << rset->getString("last_name") << ", Has Ordered The Most Books (" << rset->getUInt("counter") << ") Since " << temp << endl;
+	}
+
+	else cout << "Invaid Date or No Clients Found That Ordered Any Books After The Date That Was Given." << endl;
+	
+
+	delete con;
+	delete pstmt;
+	delete rset;
+}
+
+void Database::ordersSince() {
+
+	string temp1 , temp2;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT * FROM orders where order_date >= ? AND order_date <= ?;");
+
+	cout << "Please Enter Start Date:> ";
+	clearCin();
+	getline(cin, temp1);
+	pstmt->setString(1, temp1);
+	cout << "Please Enter End Date:> ";
+	getline(cin, temp2);
+	pstmt->setString(2, temp2);
+	rset = pstmt->executeQuery();
+
+	if (rset->first()) {
+		cout << "Number Of Orders Between " << temp1 << " And " << temp2 << " Is: " << rset->rowsCount() << "." << endl;
+	}
+	else cout << "Invaid Date or No Orders Found That Where Ordered Between Dates." << endl;
+
+
+	delete con;
+	delete pstmt;
+	delete rset;
+}
+
+void Database::workersSales() {
+
+	string temp1, temp2;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT first_name, last_name, SUM(deal_val) as sales FROM deal inner join worker where worker.id = ? AND emp_id = ? AND deal.deal_date >= ? AND deal.deal_date <= ? AND is_canceled = false;");
+
+	
+	cout << "Please Enter Worker ID:> ";
+	clearCin();
+	getline(cin, temp1);
+	pstmt->setString(1, temp1);
+	pstmt->setString(2, temp1);
+
+	cout << "Please Enter Start Date:> ";
+	getline(cin, temp1);
+	pstmt->setString(3, temp1);
+
+	cout << "Please Enter End Date:> ";
+	getline(cin, temp2);
+	pstmt->setString(4, temp2);
+
+	rset = pstmt->executeQuery();
+	rset->first();
+
+	string first = rset->getString("first_name");
+	string last = rset->getString("last_name");
+
+	if (!(first == "") && !(last == "")) {
+		cout << "The Total Sum Of Sales By " << first << " " << last << " Between " << temp1 << " And " << temp2 << " Is: " << rset->getUInt("sales") << "$." << endl;
+	}
+	else cout << "Invaid Dates Or Worker ID." << endl;
+
+
+	delete con;
+	delete pstmt;
+	delete rset;
+
 }

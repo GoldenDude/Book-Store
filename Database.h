@@ -52,6 +52,10 @@ public:
 	void bookSupplier();
 	void bookSoldSince();
 	void booksClientBoughtSince();
+	void clientsJoinedAfterDate();
+	void topClient();
+	void ordersSince();
+	void workersSales();
 };
 
 

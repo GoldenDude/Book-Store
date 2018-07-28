@@ -646,3 +646,65 @@ void Database::workersSales() {
 	delete rset;
 
 }
+
+void Database::topSupplierOrder() {
+	string temp;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT supplier.supplier_num, supplier.supplier_name, SUM(order_books_count.count_books) as counter	FROM supplier INNER JOIN (SELECT orders.supplier_num, COUNT(*) AS count_books FROM orders "
+													 "INNER JOIN order_book WHERE order_book.order_num = orders.order_num AND orders.order_date >= ? "
+													 "GROUP BY orders.order_num) AS order_books_count WHERE order_books_count.supplier_num = supplier.supplier_num "
+													 "group by supplier_num ORDER BY counter desc;");
+	
+
+	cout << "Please Enter A Date:> ";
+	clearCin();
+	getline(cin, temp);
+	pstmt->setString(1, temp);
+
+	rset = pstmt->executeQuery();
+	rset->first();
+
+	if (rset->first()) {
+		cout << rset->getString("supplier_name") << " Has Supplied " << rset->getString("counter") << " Books Since " << temp << ". More Than Any Other Supplier."<< endl;
+	}
+	else cout << "Invaid Date." << endl;
+
+	delete con;
+	delete pstmt;
+	delete rset;
+}
+
+void Database::totalDiscount() {
+
+	string temp;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT first_name, last_name, SUM(ceiling(deal_val * deal.discount)) AS total_discount FROM deal INNER JOIN client WHERE "
+													 "deal_date >= ? AND deal.client_id = ? AND client.client_id = deal.client_id ;");
+
+	
+	cout << "Please Enter Client ID:> ";
+	clearCin();
+	getline(cin, temp);
+	pstmt->setString(2, temp);
+
+	cout << "Please Enter A Date:> ";
+	getline(cin, temp);
+	pstmt->setString(1, temp);
+
+	rset = pstmt->executeQuery();
+	rset->first();
+
+	if (rset->first()) {
+		cout << rset->getString("first_name") << " " << rset->getString("last_name")<< " Has Received A Total Discount Of " << rset->getUInt("total_discount") << "$ Since " << temp << "." << endl;
+	}
+	else cout << "Invaid Date Or Client ID." << endl;
+
+	delete con;
+	delete pstmt;
+	delete rset;
+
+}

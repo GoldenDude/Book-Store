@@ -56,6 +56,8 @@ public:
 	void topClient();
 	void ordersSince();
 	void workersSales();
+	void topSupplierOrder();
+	void totalDiscount();
 };
 
 

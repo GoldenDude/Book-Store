@@ -708,3 +708,45 @@ void Database::totalDiscount() {
 	delete rset;
 
 }
+
+void Database::top10Books() {
+	
+	string temp1, temp2;
+	int counter = 1;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT deal_book.book_name, COUNT(*) AS book_count FROM deal INNER JOIN deal_book WHERE deal.deal_num = deal_book.deal_num "
+													 "AND deal.deal_date >= ? AND deal.deal_date <= ? AND deal.is_canceled = false group by book_name ORDER BY book_count DESC;");
+
+
+	cout << "Please Enter Start Date:> ";
+	clearCin();
+	getline(cin, temp1);
+	pstmt->setString(1, temp1);
+
+	cout << "Please Enter End Date:> ";
+	getline(cin, temp2);
+	pstmt->setString(2, temp2);
+
+	rset = pstmt->executeQuery();
+
+	if (rset->rowsCount() == 0) {
+		 cout << "Invaid Dates Or No Deals Where Found Between Given Dates." << endl;
+		 return;
+	}
+
+	rset->beforeFirst();
+	cout << "Top Books Sold Between " << temp1 << " And " << temp2 << " Are:" << endl;
+
+	while (rset->next()) {
+		cout << counter << ") " << rset->getString("book_name") << ", Selling " << rset->getString("book_count") << " Books." << endl;
+		++counter;
+	}
+	
+
+	delete con;
+	delete pstmt;
+	delete rset;
+
+}

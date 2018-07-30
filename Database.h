@@ -59,6 +59,7 @@ public:
 	void topSupplierOrder();
 	void totalDiscount();
 	void top10Books();
+	void supplierPurchases();
 };
 
 

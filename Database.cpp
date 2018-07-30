@@ -748,5 +748,64 @@ void Database::top10Books() {
 	delete con;
 	delete pstmt;
 	delete rset;
+}
 
+void Database::supplierPurchases() {
+
+	string temp1, temp2, supplier;
+	int counter = 1, sum = 0;;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT book_name, supplier_price FROM order_book INNER JOIN orders INNER JOIN book WHERE order_book.book_name = book.name "
+													 "AND orders.order_date BETWEEN ? AND ? AND orders.order_num = order_book.order_num AND orders.supplier_num = ?;");
+	
+	PreparedStatement *pstmt2 = con->prepareStatement("SELECT supplier_name FROM supplier WHERE supplier.supplier_num = ?;");
+	
+	cout << "Please Enter Supplier Number:> ";
+	clearCin();
+	getline(cin, supplier);
+	pstmt->setString(3, supplier);
+	pstmt2->setString(1, supplier);
+
+	cout << "Please Enter Start Date:> ";
+	getline(cin, temp1);
+	pstmt->setString(1, temp1);
+
+	cout << "Please Enter End Date:> ";
+	getline(cin, temp2);
+	pstmt->setString(2, temp2);
+
+	rset = pstmt2->executeQuery();
+
+	if (rset->rowsCount() == 0) {
+		cout << "Invalid Supplier Number." << endl;
+		return;
+	}
+
+	rset->first();
+	supplier = rset->getString("supplier_name");
+	;
+
+	rset = pstmt->executeQuery();
+	if (rset->rowsCount() == 0) {
+		cout << "Invaid Dates Or No Orders Where Found Between Given Dates." << endl;
+		return;
+	}
+
+	cout << "\nTotal Purchases From " << supplier << " Between " << temp1 << " And " << temp2 << ":" << endl;
+
+	rset->beforeFirst();
+
+	while (rset->next()) {
+		sum += rset->getUInt("supplier_price");
+		cout << counter << ") " << rset->getString("book_name") << ", Costing " << rset->getString("supplier_price") << "$." << endl;
+		++counter;
+	}
+	cout << "\nSub-Total: " << sum << "$." << endl;
+
+	delete con;
+	delete pstmt;
+	delete pstmt2;
+	delete rset;
 }

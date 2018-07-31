@@ -208,16 +208,16 @@ void Database::addDeals(){
 	con->setSchema(DB_NAME);
 	Statement *stmt = con->createStatement();
 	stmt->execute("insert into deal_book (deal_num, book_name) values(5, 'Harry Potter And The Philosophers Stone'),(5, 'A Song Of Ice And Fire 2: A Clash Of Kings'),(9, 'A Song Of Ice And Fire 2: A Clash Of Kings'),(9, 'The Book Of Mormons'),(9, 'Enders Shadow'),(8, 'The Book Of Mormons'),"
-		"(5, 'Harry Potter And The Chamber Of Secrets'),(6, 'A Song Of Ice And Fire 1: A Game Of Thrones'),(8, 'Enders Game'),(5, 'Enders Game'),(11, 'Harry Potter And The Chamber Of Secrets'),"
+		"(5, 'Harry Potter And The Chamber Of Secrets'),(6, 'A Song Of Ice And Fire 4: A Feast For Crows'),(6, 'The Book Of Mormons'),(8, 'Enders Game'),(5, 'Enders Game'),(11, 'Harry Potter And The Chamber Of Secrets'),"
 		"(8, 'A Song Of Ice And Fire 1: A Game Of Thrones'),(8, 'Harry Potter And The Prisoner Of Azkaban'),(1, 'It, First Edition'),(1, 'Enders Shadow'),(2, 'Enders Shadow'),(3, 'A Song Of Ice And Fire 2: A Clash Of Kings'),"
-		"(4, 'Enders Game'),(7, 'Harry Potter And The Prisoner Of Azkaban'),(2, 'A Song Of Ice And Fire 1: A Game Of Thrones'),(10, 'A Song Of Ice And Fire 2: A Clash Of Kings'),"
+		"(4, 'Enders Game'),(7, 'Harry Potter And The Prisoner Of Azkaban'),(2, 'A Song Of Ice And Fire 1: A Game Of Thrones'),(10, 'A Song Of Ice And Fire 2: A Clash Of Kings'),(10, 'Harry Potter And The Chamber Of Secrets'),(10, 'Enders Game'),"
 		"(12, 'It, First Edition'),(12, 'A Song Of Ice And Fire 2: A Clash Of Kings'),(13, 'A Song Of Ice And Fire 2: A Clash Of Kings'),(13, 'Enders Shadow'),"
-		"(13, 'It, First Edition'),(14, 'The Book Of Mormons'),(14, 'Harry Potter And The Chamber Of Secrets'),(14, 'Enders Shadow'),(14, 'A Song Of Ice And Fire 2: A Clash Of Kings');");
+		"(13, 'It, First Edition'),(14, 'The Book Of Mormons'),(14, 'Harry Potter And The Chamber Of Secrets'),(14, 'Enders Game');");
 
 
 	stmt->execute("insert into deal (deal_val, client_id, discount, emp_id, is_canceled, deal_date) values(0, 1, 0.2, 3, false, '1998-12-02'),(0, 2, 0.1, 2, false, '1997-09-08'),(0, 3, 0.4, 1, true, '2000-03-06'),"
-								  "(0, 4, 0.3, 4, false, '1998-08-02'),(0, 4, 0.2, 1, false, '2016-03-26'),(0, 5, 0.3, 3, false, '2005-10-06'),(0, 6, 0.3, 4, false, '2018-07-17'),(0, 10, 0.1, 5, false, '2003-03-24'),"
-								  "(0, 6, 0.3, 3, false, '2015-06-06'),(0, 7, 0.3, 4, false, '2017-11-11'),(0, 8, 0.2, 2, false, '2002-10-02'),(0, 8, 0.2, 3, false, '2018-03-06'),(0, 9, 0.1, 1, false, '2017-09-06'),(0, 10, 0.2, 1, true, '2017-10-29');");
+								  "(0, 4, 0.3, 4, false, '1998-08-02'),(0, 4, 0.2, 1, false, '2011-07-15'),(0, 5, 0.3, 3, false, '2009-11-27'),(0, 6, 0.3, 4, false, '2018-07-17'),(0, 10, 0.1, 5, false, '2003-03-24'),"
+								  "(0, 6, 0.3, 3, false, '2015-06-06'),(0, 7, 0.3, 4, false, '2018-04-11'),(0, 8, 0.2, 2, false, '2002-10-02'),(0, 8, 0.2, 3, false, '2018-03-06'),(0, 9, 0.1, 1, false, '2017-09-06'),(0, 10, 0.2, 1, false, '2013-04-10');");
 
 
 	stmt->execute("CREATE TABLE  temp AS SELECT deal_num, SUM(price) as val FROM deal_book inner join book where book.name = deal_book.book_name group by deal_num;");
@@ -225,7 +225,7 @@ void Database::addDeals(){
 	stmt->execute("UPDATE deal, temp SET deal.deal_val = temp.val WHERE deal.deal_num = temp.deal_num;");
 	stmt->execute("DROP TABLE temp;");
 
-	/* Updating total sum + sum this year, of deals in clients*/
+	/* Updating total sum + sum this year, of deals in clients */
 	stmt->execute("CREATE TABLE temp as SELECT deal.client_id, SUM(CEILING(deal_val * (1 - deal.discount))) AS val from deal WHERE is_canceled = 0 group by deal.client_id;");
 	stmt->execute("UPDATE client, temp SET total_sum = temp.val WHERE client.client_id = temp.client_id;");
 	stmt->execute("DROP TABLE temp;");
@@ -719,7 +719,6 @@ void Database::top10Books() {
 	PreparedStatement *pstmt = con->prepareStatement("SELECT deal_book.book_name, COUNT(*) AS book_count FROM deal INNER JOIN deal_book WHERE deal.deal_num = deal_book.deal_num "
 													 "AND deal.deal_date >= ? AND deal.deal_date <= ? AND deal.is_canceled = false group by book_name ORDER BY book_count DESC;");
 
-
 	cout << "Please Enter Start Date:> ";
 	clearCin();
 	getline(cin, temp1);
@@ -753,7 +752,7 @@ void Database::top10Books() {
 void Database::supplierPurchases() {
 
 	string temp1, temp2, supplier;
-	int counter = 1, sum = 0;;
+	int counter = 1, sum = 0;
 	Connection *con = driver->connect(connection_properties);
 	con->setSchema(DB_NAME);
 	ResultSet *rset;
@@ -807,5 +806,39 @@ void Database::supplierPurchases() {
 	delete con;
 	delete pstmt;
 	delete pstmt2;
+	delete rset;
+}
+
+void Database::ordeToDeal() {
+	
+	string temp1, temp2;
+	int counter = 1;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT orders.order_num, orders.order_date, first_name, last_name FROM orders inner join order_book inner join client WHERE order_date BETWEEN ? AND ? AND order_status = 'Closed'"
+													 "AND orders.order_num = order_book.order_num AND orders.client_id = client.client_id group by order_num;");
+
+	cout << "Please Enter Start Date:> ";	
+	clearCin();
+	getline(cin, temp1);
+	pstmt->setString(1, temp1);
+
+	cout << "Please Enter End Date:> ";
+	getline(cin, temp2);
+	pstmt->setString(2, temp2);
+
+	rset = pstmt->executeQuery();
+	rset->beforeFirst();
+
+	cout << "Orders That Turned Into A Deal Between: " << temp1 << " And " << temp2 << ":" << endl;
+
+	while (rset->next()) {
+		cout << counter << ") Ordered for: " << rset->getString("first_name") << " " << rset->getString("last_name") << " At: " << rset->getString("order_date") << endl;
+		++counter;
+	}
+	
+	delete con;
+	delete pstmt;
 	delete rset;
 }

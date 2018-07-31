@@ -60,6 +60,7 @@ public:
 	void totalDiscount();
 	void top10Books();
 	void supplierPurchases();
+	void ordeToDeal();
 };
 
 

@@ -104,8 +104,6 @@ Database::Database() : driver(get_driver_instance()) {
 			addDeals();
 			addOrders();
 
-			//stmt->execute("DROP DATABASE book_store;");
-
 			delete stmt;
 
 		}
@@ -262,6 +260,7 @@ void Database::allBooks(){
 
 	while (rset->next()) {
 		cout << counter << ") " << rset->getString("name") << ". By: " << rset->getString("Author") << "." << endl;
+		++counter;
 	}
 
 	delete con;
@@ -841,4 +840,86 @@ void Database::ordeToDeal() {
 	delete con;
 	delete pstmt;
 	delete rset;
+}
+
+void Database::quarterProfit() {
+	
+	string temp1, temp2;
+	int quarter = 0, sum = 0;
+	Connection *con = driver->connect(connection_properties);
+	con->setSchema(DB_NAME);
+	ResultSet *rset;
+	PreparedStatement *pstmt = con->prepareStatement("SELECT deal_val, SUM(book.supplier_price) AS price FROM deal INNER JOIN deal_book INNER JOIN book WHERE deal_date BETWEEN ? AND ? "
+													 "AND deal.deal_num = deal_book.deal_num AND book.name = deal_book.book_name group by deal.deal_num;");
+
+	cout << "Please Enter Year:> ";
+	clearCin();
+	getline(cin, temp1);
+
+	cout << "Please Enter Quarter Number (1-4):> ";
+	cin >> quarter;
+
+	if (quarter != 1 && quarter != 2 && quarter != 3 && quarter != 4) {
+		cout << "Bad Quarter Input.";
+		delete con;
+		delete pstmt;
+
+		return;
+	}
+
+	switch (quarter) {
+		
+		case 1:{
+
+			temp2 = temp1 + "-01-01";
+			pstmt->setString(1, temp2);
+			temp2 = temp1 + "-03-30";
+			pstmt->setString(2, temp2);
+			break;
+		}
+
+		case 2:{
+			temp2 = temp1 + "-04-01";
+			pstmt->setString(1, temp2);
+			temp2 = temp1 + "-06-30";
+			pstmt->setString(2, temp2);
+			break;
+		}
+
+		case 3:{
+			temp2 = temp1 + "-07-01";
+			pstmt->setString(1, temp2);
+			temp2 = temp1 + "-09-30";
+			pstmt->setString(2, temp2);
+			break;
+		}
+
+		case 4:{
+			temp2 = temp1 + "-10-01";
+			pstmt->setString(1, temp2);
+			temp2 = temp1 + "-12-30";
+			pstmt->setString(2, temp2);
+			break;
+		}
+	}
+
+	rset = pstmt->executeQuery();
+
+	if (!rset->rowsCount()) {
+		cout << "Bad Year Or Quarter Input Or No Deals Where Found In Given Year/Quarter." << endl;
+		return;
+	}
+
+	rset->beforeFirst();
+
+
+	while (rset->next()) {
+		sum += rset->getUInt("deal_val") - rset->getUInt("price");
+	}
+
+	cout << "Total Profits In Quarter " << quarter << " Of " << temp1 << ": " << sum  << "$."<< endl;
+
+	delete con;
+	delete pstmt;
+	delete rset;	
 }

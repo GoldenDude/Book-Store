@@ -61,6 +61,7 @@ public:
 	void top10Books();
 	void supplierPurchases();
 	void ordeToDeal();
+	void quarterProfit();
 };
 
 
